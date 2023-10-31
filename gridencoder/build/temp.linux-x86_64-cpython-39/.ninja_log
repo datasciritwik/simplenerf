@@ -1,0 +1,3 @@
+# ninja log v5
+0	8959	1694761725511724543	/home/mlteam/nerf/zipnerf-pytorch/gridencoder/build/temp.linux-x86_64-cpython-39/home/mlteam/nerf/zipnerf-pytorch/gridencoder/src/bindings.o	aae94e19722846fc
+0	52677	1694761769231724356	/home/mlteam/nerf/zipnerf-pytorch/gridencoder/build/temp.linux-x86_64-cpython-39/home/mlteam/nerf/zipnerf-pytorch/gridencoder/src/gridencoder.o	daac2374189b9451
