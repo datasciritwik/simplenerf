@@ -1,17 +1,12 @@
 import abc
-import copy
 import json
 import os
-import cv2
 from internal import camera_utils
 from internal import configs
 from internal import image as lib_image
 from internal import raw_utils
 from internal import utils
-from collections import defaultdict
 import numpy as np
-import cv2
-from PIL import Image
 import torch
 from tqdm import tqdm
 
@@ -317,75 +312,6 @@ class Dataset(torch.utils.data.Dataset):
         return self._next_fn(item)
 
 
-# class Blender(Dataset):
-#     """Blender Dataset."""
-
-#     def _load_renderings(self, config):
-#         """Load images from disk."""
-#         if config.render_path:
-#             raise ValueError('render_path cannot be used for the blender dataset.')
-#         pose_file = os.path.join(self.data_dir, f'transforms.json')
-#         with utils.open_file(pose_file, 'r') as fp:
-#             meta = json.load(fp)
-#         images = []
-#         disp_images = []
-#         normal_images = []
-#         cams = []
-#         for idx, frame in enumerate(tqdm(meta['frames'], desc='Loading Blender dataset', disable=self.global_rank != 0, leave=False)):
-#             fprefix = os.path.join(self.data_dir, frame['file_path'])
-
-#             def get_img(f, fprefix=fprefix):
-#                 image = utils.load_img(fprefix + f)
-#                 if config.factor > 1:
-#                     image = lib_image.downsample(image, config.factor)
-#                 return image
-
-#             if self._use_tiffs:
-#                 channels = [get_img(f'_{ch}.tiff') for ch in ['R', 'G', 'B', 'A']]
-#                 # Convert image to sRGB color space.
-#                 image = lib_image.linear_to_srgb_np(np.stack(channels, axis=-1))
-#             else:
-#                 image = get_img('.png') / 255.
-#             images.append(image)
-
-#             if self._load_disps:
-#                 disp_image = get_img('_disp.tiff')
-#                 disp_images.append(disp_image)
-#             if self._load_normals:
-#                 normal_image = get_img('_normal.png')[..., :3] * 2. / 255. - 1.
-#                 normal_images.append(normal_image)
-
-#             cams.append(np.array(frame['transform_matrix'], dtype=np.float32))
-
-#         self.images = np.stack(images, axis=0)
-#         if self._load_disps:
-#             self.disp_images = np.stack(disp_images, axis=0)
-#         if self._load_normals:
-#             self.normal_images = np.stack(normal_images, axis=0)
-#             self.alphas = self.images[..., -1]
-
-#         w = meta['w']
-#         h = meta['h']
-#         cx = meta['cx'] if 'cx' in meta else w / 2.
-#         cy = meta['cy'] if 'cy' in meta else h / 2.
-#         if 'fl_x' in meta:
-#             fx = meta['fl_x']
-#         else:
-#             fx = 0.5 * w / np.tan(0.5 * float(meta['camera_angle_x']))
-#         if 'fl_y' in meta:
-#             fy = meta['fl_y']
-#         else:
-#             fy = 0.5 * h / np.tan(0.5 * float(meta['camera_angle_y']))
-#         self.pixtocam = np.linalg.inv(camera_utils.intrinsic_matrix(fx, fy, cx, cy))
-#         coeffs = ['k1', 'k2', 'p1', 'p2']
-        
-
-#         rgb, alpha = self.images[..., :3], self.images[..., -1:]
-#         self.images = rgb * alpha + (1. - alpha)  # Use a white background.
-#         self.height, self.width = h, w
-#         self.camtoworlds = np.stack(cams, axis=0)
-
-
 
 class Blender(Dataset):
     """Blender Dataset."""
@@ -394,7 +320,7 @@ class Blender(Dataset):
         """Load images from disk."""
         if config.render_path:
             raise ValueError('render_path cannot be used for the blender dataset.')
-        pose_file = os.path.join(self.data_dir, f'transforms_{self.split.value}.json')
+        pose_file = os.path.join(self.data_dir, f'transform.json')
         with utils.open_file(pose_file, 'r') as fp:
             meta = json.load(fp)
         images = []
@@ -434,8 +360,8 @@ class Blender(Dataset):
             self.normal_images = np.stack(normal_images, axis=0)
             self.alphas = self.images[..., -1]
 
-        rgb, alpha = self.images[..., :3], self.images[..., -1:]
-        self.images = rgb * alpha + (1. - alpha)  # Use a white background.
+        rgb, alpha = self.images[..., :3], self.images[..., -1:]    ### comment this 
+        self.images = rgb * alpha + (1. - alpha)  # Use a white background. and this line for original background images.
         self.height, self.width = self.images.shape[1:3]
         self.camtoworlds = np.stack(cams, axis=0)
         self.focal = .5 * self.width / np.tan(.5 * float(meta['camera_angle_x']))
